@@ -1,0 +1,123 @@
+[config]
+type = "pipeline"
+chartbook_format_version = "0.0.2"
+
+[site]
+title = "SPX Options"
+author = "Jeremy Bejarano"
+copyright = "2025"
+logo_path = ""
+favicon_path = ""
+
+[pipeline]
+id = "options"
+pipeline_name = "SPX Options"
+pipeline_description = "Leverage-adjusted SPX option portfolio returns following CJS (2013) and HKM (2017)"
+lead_pipeline_developer = "Jeremy Bejarano"
+contributors = ["Jeremy Bejarano", "Tobias Rodriguez del Pozo"]
+runs_on = "Windows/Linux/MacOS"
+git_repo_URL = "https://github.com/ftsfr/options"
+README_file_path = "./README.md"
+
+[notebooks]
+
+[notebooks.summary_options]
+notebook_name = "summary_options"
+notebook_description = "Summary statistics and visualization of SPX option portfolio returns"
+notebook_path = "_output/_notebook_build/summary_options.ipynb"
+is_publishable = true
+
+[charts]
+
+[dataframes]
+
+[dataframes.ftsfr_hkm_option_returns]
+dataframe_name = "ftsfr_hkm_option_returns"
+short_description_df = "HKM (2017) 18 leverage-adjusted SPX option portfolio monthly returns"
+data_sources = ["OptionMetrics"]
+data_providers = ["WRDS"]
+need_to_contact_provider = ["no"]
+data_on_pre_approved_list = ["No"]
+links_to_data_providers = ["https://wrds-www.wharton.upenn.edu/"]
+topic_tags = ["options", "SPX", "returns", "HKM"]
+type_of_data_access = ["WRDS Subscription"]
+data_license = "WRDS"
+license_expiration_date = ""
+provider_contact_info = ""
+restriction_on_use = "No"
+how_is_pulled = "Pulled from WRDS OptionMetrics database"
+path_to_parquet_data = "./_data/ftsfr_hkm_option_returns.parquet"
+path_to_excel_data = ""
+date_col = "ds"
+dataframe_docs_str = """
+## HKM Option Portfolio Returns
+
+Monthly leverage-adjusted returns for 18 SPX option portfolios following He, Kelly, Manela (2017).
+
+### Columns
+
+| Column | Description |
+|--------|-------------|
+| unique_id | Portfolio identifier (e.g., hkm_C_1000 = call, ATM) |
+| ds | Month-end date |
+| y | Monthly leverage-adjusted return |
+
+### Portfolio Construction
+
+- 18 portfolios = 9 moneyness levels x 2 option types (call/put)
+- Moneyness: 0.90, 0.925, 0.95, 0.975, 1.0, 1.025, 1.05, 1.075, 1.10
+- Returns averaged across 30, 60, 90-day maturities
+
+### Data Source
+
+WRDS OptionMetrics (SPX options, secid=108105)
+"""
+
+[dataframes.ftsfr_cjs_option_returns]
+dataframe_name = "ftsfr_cjs_option_returns"
+short_description_df = "CJS (2013) 54 leverage-adjusted SPX option portfolio monthly returns"
+data_sources = ["OptionMetrics"]
+data_providers = ["WRDS"]
+need_to_contact_provider = ["no"]
+data_on_pre_approved_list = ["No"]
+links_to_data_providers = ["https://wrds-www.wharton.upenn.edu/"]
+topic_tags = ["options", "SPX", "returns", "CJS"]
+type_of_data_access = ["WRDS Subscription"]
+data_license = "WRDS"
+license_expiration_date = ""
+provider_contact_info = ""
+restriction_on_use = "No"
+how_is_pulled = "Pulled from WRDS OptionMetrics database"
+path_to_parquet_data = "./_data/ftsfr_cjs_option_returns.parquet"
+path_to_excel_data = ""
+date_col = "ds"
+dataframe_docs_str = """
+## CJS Option Portfolio Returns
+
+Monthly leverage-adjusted returns for 54 SPX option portfolios following Constantinides, Jackwerth, Savov (2013).
+
+### Columns
+
+| Column | Description |
+|--------|-------------|
+| unique_id | Portfolio identifier (e.g., cjs_C_1000_30 = call, ATM, 30-day) |
+| ds | Month-end date |
+| y | Monthly leverage-adjusted return |
+
+### Portfolio Construction
+
+- 54 portfolios = 9 moneyness x 3 maturities x 2 option types
+- Moneyness: 0.90, 0.925, 0.95, 0.975, 1.0, 1.025, 1.05, 1.075, 1.10
+- Maturities: 30, 60, 90 days
+
+### Data Filtration
+
+Following CJS (2013) Appendix B:
+- Level 1: Remove duplicates, zero bids
+- Level 2: DTM 7-180 days, IV 5-100%, moneyness 0.8-1.2
+- Level 3: IV outlier filter, put-call parity filter
+
+### Data Source
+
+WRDS OptionMetrics (SPX options, secid=108105)
+"""
