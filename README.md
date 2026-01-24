@@ -69,7 +69,20 @@ This pipeline constructs leverage-adjusted SPX option portfolio returns followin
 - IV outlier filter (quadratic fit)
 - Put-call parity filter
 
-## References
+## Academic References
 
-- Constantinides, G., Jackwerth, J., & Savov, A. (2013). "The Puzzle of Index Option Returns." *Review of Asset Pricing Studies*.
-- He, Z., Kelly, B., & Manela, A. (2017). "Intermediary Asset Pricing: New Evidence from Many Asset Classes." *Journal of Financial Economics*.
+### Primary Papers
+
+- **Constantinides, Jackwerth, and Savov (2013)** - "The Puzzle of Index Option Returns"
+  - Review of Asset Pricing Studies
+  - Methodology for 54-portfolio construction with leverage adjustment
+
+- **He, Kelly, and Manela (2017)** - "Intermediary Asset Pricing: New Evidence from Many Asset Classes"
+  - Journal of Financial Economics 126.1 (2017): 1-35
+  - 18-portfolio averaging methodology
+
+### Key Findings Replicated
+
+- Crisis-related factors significantly reduce option return pricing errors
+- Daily adjustment for beta, maturity, and moneyness reduces variance/skewness
+- Short-maturity OTM puts are particularly sensitive to market conditions

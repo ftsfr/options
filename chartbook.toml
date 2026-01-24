@@ -24,10 +24,32 @@ README_file_path = "./README.md"
 [notebooks.summary_options]
 notebook_name = "summary_options"
 notebook_description = "Summary statistics and visualization of SPX option portfolio returns"
-notebook_path = "_output/_notebook_build/summary_options.ipynb"
+notebook_path = "_output/summary_options.ipynb"
 is_publishable = true
 
 [charts]
+
+[charts.options_returns_replication]
+chart_name = "SPX Option Portfolio Returns"
+short_description_chart = "Leverage-adjusted SPX option portfolio returns following He, Kelly, Manela (2017)"
+dataframe_id = "ftsfr_hkm_option_returns"
+path_to_html_chart = "./_output/options_returns_replication.html"
+path_to_excel_chart = ""
+topic_tags = ["options", "SPX", "returns", "replication"]
+past_publications = ["He, Kelly, and Manela (2017) - Intermediary Asset Pricing", "Constantinides, Jackwerth, and Savov (2013) - The Puzzle of Index Option Returns"]
+chart_docs_str = """
+## SPX Option Portfolio Returns
+
+Monthly leverage-adjusted returns for SPX option portfolios.
+
+### Portfolio Construction
+
+18 HKM portfolios = 9 moneyness levels x 2 option types
+
+### Data Source
+
+WRDS OptionMetrics (SPX options, secid=108105)
+"""
 
 [dataframes]
 

@@ -190,6 +190,17 @@ def IV_filter(l2_data, date_range="", data_dir=None):
     print(" |-- IV filter: applying quadratic fit...")
     l2_data = apply_quadratic_iv_fit(l2_data)
 
+    # Handle empty dataframe or missing fitted_iv column
+    if l2_data.empty or "fitted_iv" not in l2_data.columns:
+        print(" |-- IV filter: no data remaining after quadratic fit, skipping outlier filter...")
+        l3_data_iv_only = l2_data.copy()
+        if data_dir is not None:
+            print(" |-- IV filter: saving empty L3 IV-filtered data...")
+            l3_data_iv_only.to_parquet(
+                data_dir / f"L3_IV_filter_only_{date_range}.parquet"
+            )
+        return l2_data, l3_data_iv_only
+
     print(" |-- IV filter: filtering outliers...")
     l3_data_iv_only = iv_filter_outliers(l2_data, "percent", 2.0)
     l3_data_iv_only = l3_data_iv_only.copy()

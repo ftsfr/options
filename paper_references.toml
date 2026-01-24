@@ -1,0 +1,30 @@
+# Paper References for Options Module
+
+[Constantinides2013]
+title = "The Puzzle of Index Option Returns"
+authors = "George M. Constantinides, Jens Carsten Jackwerth, and Alexi Savov"
+year = 2013
+journal = "Review of Asset Pricing Studies"
+description = "The paper constructs a panel of S&P 500 Index call and put option portfolios, adjusted daily to maintain specific maturity, moneyness, and market beta."
+empirical_facts = [
+    "The constructed panel consists of 54 option portfolios, each adjusted daily for targeted beta, maturity, and moneyness.",
+    "The study covers the period from April 1986 to January 2012, including major financial crises.",
+    "Crisis-related factors like Jump and Volatility Jump significantly reduce the pricing errors of option returns.",
+    "Short-maturity out-of-the-money puts are particularly sensitive to market conditions.",
+]
+lessons_learned = [
+    "Crisis-related factors are crucial in explaining the cross-sectional variation in index option returns.",
+    "Daily adjustment of option portfolios for beta, maturity, and moneyness reduces variance and skewness.",
+]
+data_sources = ["Berkeley Options Database (April 1986 - December 1995)", "OptionMetrics database (January 1996 - January 2012)"]
+
+[He2017]
+title = "Intermediary Asset Pricing: New Evidence from Many Asset Classes"
+authors = "Zhiguo He, Bryan Kelly, and Asaf Manela"
+year = 2017
+description = "The paper investigates the role of financial intermediaries in asset pricing, including options markets."
+empirical_facts = [
+    "Shocks to the equity capital ratio of primary dealers explain cross-sectional differences in expected returns across asset classes including options.",
+    "Intermediary capital risk is procyclical.",
+]
+data_sources = ["OptionMetrics", "CRSP/Compustat data"]
