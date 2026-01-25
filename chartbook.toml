@@ -51,6 +51,32 @@ Monthly leverage-adjusted returns for SPX option portfolios.
 WRDS OptionMetrics (SPX options, secid=108105)
 """
 
+[charts.options_cumulative_returns]
+chart_name = "SPX Option Portfolio Cumulative Returns"
+short_description_chart = "Cumulative returns showing growth of $1 invested in SPX option portfolios"
+dataframe_id = "ftsfr_hkm_option_returns"
+path_to_html_chart = "./_output/options_cumulative_returns.html"
+path_to_excel_chart = ""
+topic_tags = ["options", "SPX", "cumulative returns", "replication"]
+past_publications = ["He, Kelly, and Manela (2017) - Intermediary Asset Pricing", "Constantinides, Jackwerth, and Savov (2013) - The Puzzle of Index Option Returns"]
+chart_docs_str = """
+## SPX Option Portfolio Cumulative Returns
+
+Cumulative returns showing growth of $1 invested in SPX option portfolios.
+
+### Portfolio Construction
+
+18 HKM portfolios = 9 moneyness levels x 2 option types
+
+### Calculation
+
+Cumulative return = Product of (1 + monthly return) over time
+
+### Data Source
+
+WRDS OptionMetrics (SPX options, secid=108105)
+"""
+
 [dataframes]
 
 [dataframes.ftsfr_hkm_option_returns]
