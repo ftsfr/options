@@ -1,103 +1,57 @@
-[config]
-type = "pipeline"
-chartbook_format_version = "0.0.2"
-
-[site]
-title = "SPX Options"
-author = "Jeremy Bejarano"
+[project]
+name = "SPX Options"
+description = "Leverage-adjusted SPX option portfolio returns following CJS (2013) and HKM (2017)"
+contributors = [
+    "Jeremy Bejarano",
+    "Tobias Rodriguez del Pozo",
+]
+repo_url = "https://github.com/ftsfr/options"
 copyright = "2025"
-logo_path = ""
-favicon_path = ""
-
-[pipeline]
-id = "options"
-pipeline_name = "SPX Options"
-pipeline_description = "Leverage-adjusted SPX option portfolio returns following CJS (2013) and HKM (2017)"
-lead_pipeline_developer = "Jeremy Bejarano"
-contributors = ["Jeremy Bejarano", "Tobias Rodriguez del Pozo"]
-runs_on = "Windows/Linux/MacOS"
-git_repo_URL = "https://github.com/ftsfr/options"
-README_file_path = "./README.md"
-
-[notebooks]
+os_compatibility = [
+    "Windows",
+    "Linux",
+    "MacOS",
+]
 
 [notebooks.summary_options]
-notebook_name = "summary_options"
-notebook_description = "Summary statistics and visualization of SPX option portfolio returns"
-notebook_path = "_output/summary_options.ipynb"
-is_publishable = true
-
-[charts]
-
-[charts.options_returns_replication]
-chart_name = "SPX Option Portfolio Returns"
-short_description_chart = "Leverage-adjusted SPX option portfolio returns following He, Kelly, Manela (2017)"
-dataframe_id = "ftsfr_hkm_option_returns"
-path_to_html_chart = "./_output/options_returns_replication.html"
-path_to_excel_chart = ""
-topic_tags = ["options", "SPX", "returns", "replication"]
-past_publications = ["He, Kelly, and Manela (2017) - Intermediary Asset Pricing", "Constantinides, Jackwerth, and Savov (2013) - The Puzzle of Index Option Returns"]
-chart_docs_str = """
-## SPX Option Portfolio Returns
-
-Monthly leverage-adjusted returns for SPX option portfolios.
-
-### Portfolio Construction
-
-18 HKM portfolios = 9 moneyness levels x 2 option types
-
-### Data Source
-
-WRDS OptionMetrics (SPX options, secid=108105)
-"""
-
-[charts.options_cumulative_returns]
-chart_name = "SPX Option Portfolio Cumulative Returns"
-short_description_chart = "Cumulative returns showing growth of $1 invested in SPX option portfolios"
-dataframe_id = "ftsfr_hkm_option_returns"
-path_to_html_chart = "./_output/options_cumulative_returns.html"
-path_to_excel_chart = ""
-topic_tags = ["options", "SPX", "cumulative returns", "replication"]
-past_publications = ["He, Kelly, and Manela (2017) - Intermediary Asset Pricing", "Constantinides, Jackwerth, and Savov (2013) - The Puzzle of Index Option Returns"]
-chart_docs_str = """
-## SPX Option Portfolio Cumulative Returns
-
-Cumulative returns showing growth of $1 invested in SPX option portfolios.
-
-### Portfolio Construction
-
-18 HKM portfolios = 9 moneyness levels x 2 option types
-
-### Calculation
-
-Cumulative return = Product of (1 + monthly return) over time
-
-### Data Source
-
-WRDS OptionMetrics (SPX options, secid=108105)
-"""
-
-[dataframes]
+name = "summary_options"
+description = "Summary statistics and visualization of SPX option portfolio returns"
+path = "_output/summary_options.ipynb"
+publishable = true
 
 [dataframes.ftsfr_hkm_option_returns]
-dataframe_name = "ftsfr_hkm_option_returns"
-short_description_df = "HKM (2017) 18 leverage-adjusted SPX option portfolio monthly returns"
-data_sources = ["OptionMetrics"]
-data_providers = ["WRDS"]
-need_to_contact_provider = ["no"]
-data_on_pre_approved_list = ["No"]
-links_to_data_providers = ["https://wrds-www.wharton.upenn.edu/"]
-topic_tags = ["options", "SPX", "returns", "HKM"]
-type_of_data_access = ["WRDS Subscription"]
-data_license = "WRDS"
-license_expiration_date = ""
-provider_contact_info = ""
-restriction_on_use = "No"
-how_is_pulled = "Pulled from WRDS OptionMetrics database"
-path_to_parquet_data = "./_data/ftsfr_hkm_option_returns.parquet"
-path_to_excel_data = ""
+name = "ftsfr_hkm_option_returns"
+description = "HKM (2017) 18 leverage-adjusted SPX option portfolio monthly returns"
+sources = [
+    "OptionMetrics",
+]
+providers = [
+    "WRDS",
+]
+contact_required = [
+    "no",
+]
+pre_approved = [
+    "No",
+]
+provider_links = [
+    "https://wrds-www.wharton.upenn.edu/",
+]
+tags = [
+    "options",
+    "SPX",
+    "returns",
+    "HKM",
+]
+access_types = [
+    "WRDS Subscription",
+]
+license = "WRDS"
+restrictions = "No"
+pull_method = "Pulled from WRDS OptionMetrics database"
+path = "./_data/ftsfr_hkm_option_returns.parquet"
 date_col = "ds"
-dataframe_docs_str = """
+docs = """
 ## HKM Option Portfolio Returns
 
 Monthly leverage-adjusted returns for 18 SPX option portfolios following He, Kelly, Manela (2017).
@@ -122,24 +76,38 @@ WRDS OptionMetrics (SPX options, secid=108105)
 """
 
 [dataframes.ftsfr_cjs_option_returns]
-dataframe_name = "ftsfr_cjs_option_returns"
-short_description_df = "CJS (2013) 54 leverage-adjusted SPX option portfolio monthly returns"
-data_sources = ["OptionMetrics"]
-data_providers = ["WRDS"]
-need_to_contact_provider = ["no"]
-data_on_pre_approved_list = ["No"]
-links_to_data_providers = ["https://wrds-www.wharton.upenn.edu/"]
-topic_tags = ["options", "SPX", "returns", "CJS"]
-type_of_data_access = ["WRDS Subscription"]
-data_license = "WRDS"
-license_expiration_date = ""
-provider_contact_info = ""
-restriction_on_use = "No"
-how_is_pulled = "Pulled from WRDS OptionMetrics database"
-path_to_parquet_data = "./_data/ftsfr_cjs_option_returns.parquet"
-path_to_excel_data = ""
+name = "ftsfr_cjs_option_returns"
+description = "CJS (2013) 54 leverage-adjusted SPX option portfolio monthly returns"
+sources = [
+    "OptionMetrics",
+]
+providers = [
+    "WRDS",
+]
+contact_required = [
+    "no",
+]
+pre_approved = [
+    "No",
+]
+provider_links = [
+    "https://wrds-www.wharton.upenn.edu/",
+]
+tags = [
+    "options",
+    "SPX",
+    "returns",
+    "CJS",
+]
+access_types = [
+    "WRDS Subscription",
+]
+license = "WRDS"
+restrictions = "No"
+pull_method = "Pulled from WRDS OptionMetrics database"
+path = "./_data/ftsfr_cjs_option_returns.parquet"
 date_col = "ds"
-dataframe_docs_str = """
+docs = """
 ## CJS Option Portfolio Returns
 
 Monthly leverage-adjusted returns for 54 SPX option portfolios following Constantinides, Jackwerth, Savov (2013).
@@ -164,6 +132,68 @@ Following CJS (2013) Appendix B:
 - Level 1: Remove duplicates, zero bids
 - Level 2: DTM 7-180 days, IV 5-100%, moneyness 0.8-1.2
 - Level 3: IV outlier filter, put-call parity filter
+
+### Data Source
+
+WRDS OptionMetrics (SPX options, secid=108105)
+"""
+
+[charts.options_returns_replication]
+name = "SPX Option Portfolio Returns"
+description = "Leverage-adjusted SPX option portfolio returns following He, Kelly, Manela (2017)"
+dataframe = "ftsfr_hkm_option_returns"
+path = "./_output/options_returns_replication.html"
+tags = [
+    "options",
+    "SPX",
+    "returns",
+    "replication",
+]
+publications = [
+    "He, Kelly, and Manela (2017) - Intermediary Asset Pricing",
+    "Constantinides, Jackwerth, and Savov (2013) - The Puzzle of Index Option Returns",
+]
+docs = """
+## SPX Option Portfolio Returns
+
+Monthly leverage-adjusted returns for SPX option portfolios.
+
+### Portfolio Construction
+
+18 HKM portfolios = 9 moneyness levels x 2 option types
+
+### Data Source
+
+WRDS OptionMetrics (SPX options, secid=108105)
+"""
+
+[charts.options_cumulative_returns]
+name = "SPX Option Portfolio Cumulative Returns"
+description = "Cumulative returns showing growth of $1 invested in SPX option portfolios"
+dataframe = "ftsfr_hkm_option_returns"
+path = "./_output/options_cumulative_returns.html"
+tags = [
+    "options",
+    "SPX",
+    "cumulative returns",
+    "replication",
+]
+publications = [
+    "He, Kelly, and Manela (2017) - Intermediary Asset Pricing",
+    "Constantinides, Jackwerth, and Savov (2013) - The Puzzle of Index Option Returns",
+]
+docs = """
+## SPX Option Portfolio Cumulative Returns
+
+Cumulative returns showing growth of $1 invested in SPX option portfolios.
+
+### Portfolio Construction
+
+18 HKM portfolios = 9 moneyness levels x 2 option types
+
+### Calculation
+
+Cumulative return = Product of (1 + monthly return) over time
 
 ### Data Source
 
