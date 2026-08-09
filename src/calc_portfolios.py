@@ -56,7 +56,9 @@ def calc_option_delta_elasticity(df):
     T = df["days_to_maturity"].dt.days / 365.0
     S = df["close"]
     K = df["strike_price"]
-    r = df["tb_m3"] / 100
+    # tb_m3 is an annualized decimal rate: clean_optm_data already divided the
+    # raw percent quote by 100. Do not rescale it again here.
+    r = df["tb_m3"]
     sigma = df["IV"]
     d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
 
@@ -146,7 +148,8 @@ def compute_cjs_return_leverage_investment(spx_mod):
     df["mid_price_lag"] = g["mid_price"].shift(1)
     df["w_form"] = g["kernel_weight"].shift(1)
     df["elast_form"] = g["option_elasticity"].shift(1)
-    df["daily_rf"] = g["tb_m3"].shift(1) / 100 / 252
+    # tb_m3 is already a decimal annual rate (see calc_option_delta_elasticity).
+    df["daily_rf"] = g["tb_m3"].shift(1) / 252
 
     # One-contract return realized from t-1 to t.
     df["option_return"] = (df["mid_price"] - df["mid_price_lag"]) / df["mid_price_lag"]
@@ -177,19 +180,14 @@ def compute_cjs_return_leverage_investment(spx_mod):
         total_inv_weight=("inv_weight", "sum"),
         total_inv_return=("inv_return", "sum"),
         daily_rf=("daily_rf", "first"),
-        cp_flag=("cp_flag", "first"),
     ).reset_index()
 
-    # Apply CJS logic
-    def adjusted_return(row):
-        if row["cp_flag"] == "C":
-            return row["total_inv_return"] + (1 - row["total_inv_weight"]) * row["daily_rf"]
-        elif row["cp_flag"] == "P":
-            return -row["total_inv_return"] + (1 + row["total_inv_weight"]) * row["daily_rf"]
-        else:
-            return np.nan
-
-    port["portfolio_return"] = port.apply(adjusted_return, axis=1)
+    # CJS: hold x = 1/elasticity of wealth in the option and 1 - x in T-bills, so
+    # portfolio beta is x * elasticity = 1. Puts need no separate branch: their
+    # elasticity is negative, so x < 0 and the short position is already implied.
+    port["portfolio_return"] = (
+        port["total_inv_return"] + (1 - port["total_inv_weight"]) * port["daily_rf"]
+    )
 
     return port
 
