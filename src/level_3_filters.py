@@ -23,11 +23,11 @@ def apply_quadratic_iv_fit(l2_data):
     """
     Apply quadratic curve fitting to the input data.
     """
-    l2_data = (
-        l2_data.dropna(subset=["moneyness", "log_iv"])
-        .groupby(["date", "exdate", "cp_flag"])
-        .filter(lambda group: len(group) >= 3)
+    l2_data = l2_data.dropna(subset=["moneyness", "log_iv"])
+    group_sizes = l2_data.groupby(["date", "exdate", "cp_flag"])["log_iv"].transform(
+        "size"
     )
+    l2_data = l2_data[group_sizes >= 3]
 
     l2_data = l2_data.groupby(["date", "exdate", "cp_flag"], group_keys=False).apply(
         fit_and_store_curve

@@ -10,9 +10,7 @@ def calc_days_to_maturity(df):
     """
     Calculate days to maturity as exdate - date.
     """
-    df = df.copy()
-    df["days_to_maturity"] = df["exdate"] - df["date"]
-    return df
+    return df.assign(days_to_maturity=df["exdate"] - df["date"])
 
 
 def days_to_maturity_filter(df, min_days=7, max_days=180):
@@ -85,12 +83,11 @@ def implied_interest_rate_filter(df):
     Filters out options implying a negative interest rate based on put-call parity.
     Imputes missing rates using ATM options by maturity.
     """
-    df = df.copy()
-    df["mid_price"] = (df["best_bid"] + df["best_offer"]) / 2
+    df = df.assign(mid_price=(df["best_bid"] + df["best_offer"]) / 2)
 
     # Split calls and puts
-    calls = df[df["cp_flag"] == "C"].copy()
-    puts = df[df["cp_flag"] == "P"].copy()
+    calls = df[df["cp_flag"] == "C"]
+    puts = df[df["cp_flag"] == "P"]
 
     # Match by date, exdate, moneyness
     calls.set_index(["date", "exdate", "moneyness"], inplace=True)
@@ -146,8 +143,7 @@ def unable_to_compute_iv_filter(df):
     For calls: intrinsic = max(S - K, 0)
     For puts:  intrinsic = max(K - S, 0)
     """
-    df = df.copy()
-    df["mid_price"] = (df["best_bid"] + df["best_offer"]) / 2
+    df = df.assign(mid_price=(df["best_bid"] + df["best_offer"]) / 2)
 
     # Calculate intrinsic value
     df["intrinsic"] = 0

@@ -10,9 +10,7 @@ def calc_moneyness(df):
     """
     Calculate moneyness as strike price / underlying price.
     """
-    df = df.copy()
-    df["moneyness"] = df["strike_price"] / df["close"]
-    return df
+    return df.assign(moneyness=df["strike_price"] / df["close"])
 
 
 def identical_filter(df):
@@ -30,47 +28,35 @@ def identical_filter(df):
 def identical_but_price_filter(df):
     """
     For quotes with identical terms (type, strike, maturity) but different prices,
-    keep the quote whose T-bill-based implied volatility is closest to its moneyness neighbors.
+    keep the quote whose T-bill-based implied volatility is closest to the group's
+    median IV. Ties keep the first-occurring quote; a NaN-IV quote survives only
+    if every quote in its group has NaN IV (then the first quote wins).
     """
-    df = df.copy()
-
     # Find duplicates
     dup_cols = ["date", "exdate", "cp_flag", "strike_price"]
-    df["is_dup"] = df.duplicated(subset=dup_cols, keep=False)
+    is_dup = df.duplicated(subset=dup_cols, keep=False)
 
     # For non-duplicates, keep them
-    non_dups = df[~df["is_dup"]].copy()
+    non_dups = df[~is_dup]
 
-    # For duplicates, keep the one with IV closest to neighbors
-    dups = df[df["is_dup"]].copy()
+    # For duplicates, keep the one with IV closest to the group median. The
+    # stable sort on distance + drop_duplicates(keep="first") reproduces
+    # idxmin's first-occurrence tie-breaking; the final sort on the group keys
+    # keeps the surviving rows in group-key order.
+    dups = df[is_dup]
 
     if len(dups) > 0:
-        # Group by date, exdate, cp_flag and calculate median IV per moneyness bin
-        dups["moneyness_bin"] = pd.cut(
-            dups["moneyness"], bins=np.arange(0.5, 1.5, 0.05)
+        median_iv = dups.groupby(dup_cols)["IV"].transform("median")
+        iv_dist = (dups["IV"] - median_iv).abs().fillna(np.inf)
+        dups = (
+            dups.assign(_iv_dist=iv_dist)
+            .sort_values("_iv_dist", kind="stable")
+            .drop_duplicates(subset=dup_cols, keep="first")
+            .sort_values(dup_cols, kind="stable")
+            .drop(columns="_iv_dist")
         )
 
-        # For each duplicate set, find the quote with IV closest to the median
-        def select_best_iv(group):
-            if len(group) == 1:
-                return group
-            # Handle case where all IV values are NaN
-            if group["IV"].isna().all():
-                return group.iloc[[0]]
-            median_iv = group["IV"].median()
-            if pd.isna(median_iv):
-                return group.iloc[[0]]
-            best_idx = (group["IV"] - median_iv).abs().idxmin()
-            if pd.isna(best_idx):
-                return group.iloc[[0]]
-            return group.loc[[best_idx]]
-
-        dups = dups.groupby(dup_cols, group_keys=False).apply(select_best_iv)
-
-    df = pd.concat([non_dups, dups], ignore_index=True)
-    df = df.drop(columns=["is_dup", "moneyness_bin"], errors="ignore")
-
-    return df
+    return pd.concat([non_dups, dups], ignore_index=True)
 
 
 def delete_zero_bid_filter(df):
