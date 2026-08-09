@@ -5,7 +5,6 @@ Outputs: ftsfr_hkm_option_returns.parquet, ftsfr_cjs_option_returns.parquet
 
 import sys
 from pathlib import Path
-from datetime import date
 
 sys.path.insert(0, "./src")
 
@@ -13,20 +12,17 @@ import polars as pl
 
 import chartbook
 
+from date_config import CJS_FILENAME, HKM_FILENAME
+
 BASE_DIR = chartbook.env.get_project_root()
 DATA_DIR = BASE_DIR / "_data"
-
-# Date ranges
-START_DATE_01 = date(1996, 1, 1)
-END_DATE_02 = date(2019, 12, 31)
-DATE_RANGE = f"{START_DATE_01.strftime('%Y-%m')}_{END_DATE_02.strftime('%Y-%m')}"
 
 
 def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # Load HKM portfolio returns
-    hkm_file = DATA_DIR / f"hkm_portfolio_returns_{DATE_RANGE}.parquet"
+    hkm_file = DATA_DIR / HKM_FILENAME
     if hkm_file.exists():
         print(f">> Loading HKM portfolio returns from {hkm_file}...")
         df_hkm = pl.read_parquet(hkm_file)
@@ -45,7 +41,7 @@ def main():
         print(f">> HKM file not found: {hkm_file}")
 
     # Load CJS portfolio returns
-    cjs_file = DATA_DIR / f"cjs_portfolio_returns_{DATE_RANGE}.parquet"
+    cjs_file = DATA_DIR / CJS_FILENAME
     if cjs_file.exists():
         print(f">> Loading CJS portfolio returns from {cjs_file}...")
         df_cjs = pl.read_parquet(cjs_file)

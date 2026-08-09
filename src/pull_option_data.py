@@ -4,7 +4,6 @@ This module pulls SPX options data from WRDS OptionMetrics database.
 
 import sys
 from pathlib import Path
-from datetime import date
 import time
 
 sys.path.insert(0, "./src")
@@ -14,16 +13,12 @@ import wrds
 
 import chartbook
 
+from date_config import PULL_CHUNKS, raw_filename
+
 BASE_DIR = chartbook.env.get_project_root()
 DATA_DIR = BASE_DIR / "_data"
 
 WRDS_USERNAME = chartbook.env.get("WRDS_USERNAME")
-
-# Date ranges for data pulls
-START_DATE_01 = date(1996, 1, 1)
-END_DATE_01 = date(2012, 1, 31)
-START_DATE_02 = date(2012, 2, 1)
-END_DATE_02 = date(2019, 12, 31)
 
 
 def sql_query(year, start, end):
@@ -86,7 +81,14 @@ def pull_year_range(
 
 
 def clean_optm_data(df):
-    """Clean and standardize option data."""
+    """Convert WRDS raw units to the conventions the rest of the pipeline assumes.
+
+    OptionMetrics quotes `strike_price` at 1000x the real strike, and
+    `frb_all.rates_daily.dtb3` is a percent. Everything downstream expects a
+    real strike and a decimal annual rate. The cached files written by
+    `load_optm_data` are pre-clean, so any code reading them directly must call
+    this first.
+    """
     df = df.copy()
     df["strike_price"] = df["strike_price"] / 1000
     df["tb_m3"] = df["tb_m3"] / 100
@@ -101,11 +103,8 @@ def load_optm_data(start_date: str, end_date: str, force_reload: bool = False):
     """
     year_start = int(start_date[:4])
     year_end = int(end_date[:4])
-    start_ym = start_date[:7]
-    end_ym = end_date[:7]
 
-    file_name = f"data_{start_ym}_{end_ym}.parquet"
-    file_path = DATA_DIR / file_name
+    file_path = DATA_DIR / f"data_{start_date[:7]}_{end_date[:7]}.parquet"
 
     if file_path.exists() and not force_reload:
         print(f">> Reading from cache: {file_path}")
@@ -127,30 +126,25 @@ def load_optm_data(start_date: str, end_date: str, force_reload: bool = False):
 
 
 def main():
+    """Populate the raw per-chunk cache for every chunk in PULL_CHUNKS.
+
+    No combined file is written. `calc_filters` reads the chunks directly and
+    processes them a year at a time, which keeps peak memory bounded now that
+    the full sample is ~44M rows. A combined file was also a unit trap: it was
+    written post-`clean_optm_data` while the per-chunk caches are pre-clean, so
+    two files following the same naming convention held different units.
+    """
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Pull data for both date ranges
-    print("=== Pulling 1996-01 to 2012-01 ===")
-    df1 = load_optm_data(
-        start_date=str(START_DATE_01),
-        end_date=str(END_DATE_01),
-    )
+    total = 0
+    for start, end in PULL_CHUNKS:
+        print(f"\n=== Pulling {start:%Y-%m} to {end:%Y-%m} ===")
+        df = load_optm_data(start_date=str(start), end_date=str(end))
+        total += len(df)
+        print(f">> {raw_filename(start, end)}: {len(df):,} records")
+        del df
 
-    print("\n=== Pulling 2012-02 to 2019-12 ===")
-    df2 = load_optm_data(
-        start_date=str(START_DATE_02),
-        end_date=str(END_DATE_02),
-    )
-
-    # Combine the two files
-    combined_date_range = f"{str(START_DATE_01)[:7]}_{str(END_DATE_02)[:7]}"
-    combined_file = DATA_DIR / f"data_{combined_date_range}.parquet"
-
-    print(f"\n>> Combining data files...")
-    df_combined = pd.concat([df1, df2], ignore_index=True)
-    df_combined.to_parquet(combined_file, index=False)
-    print(f">> Saved combined file to {combined_file}")
-    print(f">> Total combined records: {len(df_combined):,}")
+    print(f"\n>> Total records across {len(PULL_CHUNKS)} chunks: {total:,}")
 
 
 if __name__ == "__main__":

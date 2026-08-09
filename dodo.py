@@ -11,6 +11,16 @@ import chartbook
 
 sys.path.insert(1, "./src/")
 
+from date_config import (
+    CJS_FILENAME,
+    FINAL_FILENAME,
+    HKM_FILENAME,
+    L1_FILENAME,
+    L2_FILENAME,
+    L3_FILENAME,
+    RAW_FILENAMES,
+)
+
 BASE_DIR = chartbook.env.get_project_root()
 DATA_DIR = BASE_DIR / "_data"
 OUTPUT_DIR = BASE_DIR / "_output"
@@ -57,12 +67,8 @@ def task_pull():
     """Pull SPX options data from WRDS OptionMetrics."""
     return {
         "actions": ["python src/pull_option_data.py"],
-        "file_dep": ["src/pull_option_data.py"],
-        "targets": [
-            DATA_DIR / "data_1996-01_2012-01.parquet",
-            DATA_DIR / "data_2012-02_2019-12.parquet",
-            DATA_DIR / "data_1996-01_2019-12.parquet",
-        ],
+        "file_dep": ["src/pull_option_data.py", "src/date_config.py"],
+        "targets": [DATA_DIR / name for name in RAW_FILENAMES],
         "verbosity": 2,
         "task_dep": ["config"],
     }
@@ -74,16 +80,17 @@ def task_calc_filters():
         "actions": ["python src/calc_filters.py"],
         "file_dep": [
             "src/calc_filters.py",
+            "src/date_config.py",
             "src/level_1_filters.py",
             "src/level_2_filters.py",
             "src/level_3_filters.py",
-            DATA_DIR / "data_1996-01_2019-12.parquet",
+            *[DATA_DIR / name for name in RAW_FILENAMES],
         ],
         "targets": [
-            DATA_DIR / "L1_filtered_1996-01_2019-12.parquet",
-            DATA_DIR / "L2_filtered_1996-01_2019-12.parquet",
-            DATA_DIR / "L3_filtered_1996-01_2019-12.parquet",
-            DATA_DIR / "spx_filtered_final_1996-01_2019-12.parquet",
+            DATA_DIR / L1_FILENAME,
+            DATA_DIR / L2_FILENAME,
+            DATA_DIR / L3_FILENAME,
+            DATA_DIR / FINAL_FILENAME,
         ],
         "verbosity": 2,
         "task_dep": ["pull"],
@@ -96,11 +103,12 @@ def task_calc_portfolios():
         "actions": ["python src/calc_portfolios.py"],
         "file_dep": [
             "src/calc_portfolios.py",
-            DATA_DIR / "spx_filtered_final_1996-01_2019-12.parquet",
+            "src/date_config.py",
+            DATA_DIR / FINAL_FILENAME,
         ],
         "targets": [
-            DATA_DIR / "cjs_portfolio_returns_1996-01_2019-12.parquet",
-            DATA_DIR / "hkm_portfolio_returns_1996-01_2019-12.parquet",
+            DATA_DIR / CJS_FILENAME,
+            DATA_DIR / HKM_FILENAME,
         ],
         "verbosity": 2,
         "task_dep": ["calc_filters"],
@@ -113,8 +121,9 @@ def task_format():
         "actions": ["python src/create_ftsfr_datasets.py"],
         "file_dep": [
             "src/create_ftsfr_datasets.py",
-            DATA_DIR / "cjs_portfolio_returns_1996-01_2019-12.parquet",
-            DATA_DIR / "hkm_portfolio_returns_1996-01_2019-12.parquet",
+            "src/date_config.py",
+            DATA_DIR / CJS_FILENAME,
+            DATA_DIR / HKM_FILENAME,
         ],
         "targets": [
             DATA_DIR / "ftsfr_cjs_option_returns.parquet",
