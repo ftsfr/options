@@ -109,6 +109,10 @@ def build_put_call_pairs(call_options, put_options):
 def calc_implied_interest_rate_matched(matched_options):
     """
     Calculates the implied interest rate assuming put-call parity.
+
+    See `level_2_filters.calc_implied_interest_rate`: the rate is
+    -log((S - C + P) / K) / T, and the result is r - q rather than r because no
+    dividend adjustment is applied.
     """
     try:
         S = matched_options["close_C"]
@@ -134,25 +138,24 @@ def calc_implied_interest_rate_matched(matched_options):
     P_mid = matched_options["mid_price_P"]
 
     matched_options = matched_options.copy()
-    matched_options["pc_parity_int_rate"] = np.log((S - C_mid + P_mid) / K) * T_inv
+    matched_options["pc_parity_int_rate"] = -np.log((S - C_mid + P_mid) / K) * T_inv
     return matched_options
 
 
-def pcp_filter_outliers(
-    matched_options, int_rate_rel_distance_func="percent", outlier_threshold=2.0
-):
+def pcp_filter_outliers(matched_options, outlier_threshold=2.0):
     """
-    Filters out outliers based on the relative distance of interest rates.
+    Filters out outliers based on the distance of interest rates from the
+    same-day reference rate.
+
+    The distance is a signed difference in rate units, not a percentage. A
+    percentage needs a reference that stays away from zero, and this one does
+    not: the parity rate is r - q, so the reference passes through zero
+    whenever the short rate meets the dividend yield.
     """
     matched_options = matched_options.copy()
-    matched_options["rel_distance_int_rate"] = calc_relative_distance(
-        matched_options["pc_parity_int_rate"],
-        matched_options["daily_median_rate"],
-        method=int_rate_rel_distance_func,
-    )
-    matched_options["rel_distance_int_rate"] = matched_options[
-        "rel_distance_int_rate"
-    ].fillna(0.0)
+    matched_options["rel_distance_int_rate"] = (
+        matched_options["pc_parity_int_rate"] - matched_options["daily_median_rate"]
+    ).fillna(0.0)
 
     # Calculate the standard deviation of the relative distances
     stdev_int_rate_rel_distance = matched_options["rel_distance_int_rate"].std()
@@ -245,9 +248,13 @@ def put_call_filter(df, date_range=""):
     print(" |-- PCP filter: calculating PCP implied interest rate...")
     matched_options = calc_implied_interest_rate_matched(matched_options)
 
-    # Calculate the daily median implied interest rate from the T-Bill data
+    # Reference each quote against the median parity rate observed on the same
+    # day. The reference used to be that day's median T-bill quote, which is a
+    # different quantity: parity without a dividend adjustment returns r - q,
+    # so the gap to the T-bill rate is -q, and dividing by a near-zero T-bill
+    # rate made the distance diverge through the zero-rate years.
     daily_median_int_rate = (
-        matched_options.groupby("date")["tb_m3_C"]
+        matched_options.groupby("date")["pc_parity_int_rate"]
         .median()
         .reset_index(name="daily_median_rate")
     )
@@ -256,7 +263,7 @@ def put_call_filter(df, date_range=""):
     )
 
     print(" |-- PCP filter: filtering outliers...")
-    l3_filtered_options = pcp_filter_outliers(matched_options, "percent", 2.0)
+    l3_filtered_options = pcp_filter_outliers(matched_options, outlier_threshold=2.0)
 
     # Build chart
     print(" |-- PCP filter complete.")

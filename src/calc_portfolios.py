@@ -5,7 +5,6 @@ Converts portfolios.ipynb to a script.
 
 import sys
 from pathlib import Path
-from datetime import date
 
 sys.path.insert(0, "./src")
 
@@ -15,15 +14,11 @@ from scipy.stats import norm
 
 import chartbook
 
+from date_config import CJS_FILENAME, FINAL_FILENAME, HKM_FILENAME
+
 BASE_DIR = chartbook.env.get_project_root()
 DATA_DIR = BASE_DIR / "_data"
 OUTPUT_DIR = BASE_DIR / "_output"
-
-# Date ranges
-START_DATE_01 = date(1996, 1, 1)
-END_DATE_01 = date(2012, 1, 31)
-START_DATE_02 = date(2012, 2, 1)
-END_DATE_02 = date(2019, 12, 31)
 
 
 def parse_interval_string(s):
@@ -196,10 +191,8 @@ def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    DATE_RANGE = f"{pd.Timestamp(START_DATE_01):%Y-%m}_{pd.Timestamp(END_DATE_02):%Y-%m}"
-
     # Load filtered data
-    source_file = DATA_DIR / f"spx_filtered_final_{DATE_RANGE}.parquet"
+    source_file = DATA_DIR / FINAL_FILENAME
     if not source_file.exists():
         print(f">> Input file not found: {source_file}")
         print(">> Please run calc_filters.py first")
@@ -278,7 +271,7 @@ def main():
     cjs_returns["ftfsa_id"] = "cjs_" + cjs_returns["ftfsa_id"]
     cjs_returns = cjs_returns[["ftfsa_id", "date", "return"]].set_index(["ftfsa_id", "date"])
 
-    cjs_output = DATA_DIR / f"cjs_portfolio_returns_{DATE_RANGE}.parquet"
+    cjs_output = DATA_DIR / CJS_FILENAME
     cjs_returns.to_parquet(cjs_output, index=True)
     print(f">> Saved CJS portfolio returns to {cjs_output}")
     print(f">> CJS portfolios: {cjs_returns.index.get_level_values('ftfsa_id').nunique()}")
@@ -305,7 +298,7 @@ def main():
         .sort_index()
     )
 
-    hkm_output = DATA_DIR / f"hkm_portfolio_returns_{DATE_RANGE}.parquet"
+    hkm_output = DATA_DIR / HKM_FILENAME
     hkm_returns.to_parquet(hkm_output, index=True)
     print(f">> Saved HKM portfolio returns to {hkm_output}")
     print(f">> HKM portfolios: {hkm_returns.index.get_level_values('ftfsa_id').nunique()}")

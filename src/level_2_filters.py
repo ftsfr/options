@@ -53,6 +53,19 @@ def moneyness_filter(df, min_moneyness=0.8, max_moneyness=1.2):
 def calc_implied_interest_rate(matched):
     """
     Calculate implied interest rate from put-call parity.
+
+    For a European index option paying a dividend yield q,
+
+        C - P = S e^{-qT} - K e^{-rT}   =>   S - C + P = S(1 - e^{-qT}) + K e^{-rT}
+
+    so the rate is  r = -log((S - C + P) / K) / T. The leading minus sign is
+    what makes this a rate rather than its negative; without it the expression
+    returns approximately q - r, which is anti-correlated with the actual short
+    rate (-0.99 against the 3-month T-bill across 1996-2024).
+
+    Note the result is r - q, not r, because no dividend adjustment is
+    available here. Callers must therefore not compare it against zero or
+    against a T-bill quote; see `implied_interest_rate_filter`.
     """
     import datetime
 
@@ -74,14 +87,29 @@ def calc_implied_interest_rate(matched):
     P_mid = matched["mid_price_P"]
 
     matched = matched.copy()
-    matched["pc_parity_int_rate"] = np.log((S - C_mid + P_mid) / K) * T_inv
+    matched["pc_parity_int_rate"] = -np.log((S - C_mid + P_mid) / K) * T_inv
     return matched
 
 
-def implied_interest_rate_filter(df):
+def implied_interest_rate_filter(df, outlier_threshold=2.0):
     """
-    Filters out options implying a negative interest rate based on put-call parity.
-    Imputes missing rates using ATM options by maturity.
+    Remove quotes whose put-call parity implied rate is out of line with the
+    other quotes observed on the same day.
+
+    This previously removed quotes whose implied rate was negative. That test
+    does not survive a change of rate regime. `calc_implied_interest_rate`
+    returns r - q rather than r, so a zero threshold asks whether the short
+    rate exceeds the dividend yield, which is a macroeconomic question rather
+    than a data quality one. Measured over 1996-2024 it removed 95-98% of
+    matched pairs in 1996-2000 and 99.7% in 2024, when the short rate was near
+    5%, against 1.5-5% during the years when it was near zero. Correcting only
+    the sign inverts the problem and deletes the zero-rate years instead.
+
+    Referencing each quote to the median implied rate on the same day removes
+    the regime, because the level of rates is common to the cross-section on
+    any given day. That flags a stable 3.2-6.1% of pairs in every year of the
+    sample. It is also the test CJS already apply at Level 3, where quotes are
+    compared to a daily reference rather than to a fixed threshold.
     """
     df = df.assign(mid_price=(df["best_bid"] + df["best_offer"]) / 2)
 
@@ -101,12 +129,18 @@ def implied_interest_rate_filter(df):
     )
     matched = calc_implied_interest_rate(matched)
 
-    # Remove rows with negative implied rate
-    neg = matched[matched["pc_parity_int_rate"] < 0][
+    # Deviation from the same day's median implied rate, in rate units. An
+    # absolute deviation rather than a relative one, because the reference
+    # crosses zero whenever the dividend yield meets the short rate.
+    daily_median = matched.groupby("date")["pc_parity_int_rate"].transform("median")
+    deviation = matched["pc_parity_int_rate"] - daily_median
+    is_outlier = deviation.abs() > outlier_threshold * deviation.std()
+
+    outliers = matched[is_outlier][
         ["date", "exdate", "strike_price_C", "close_C"]
     ].drop_duplicates()
     df = df.merge(
-        neg,
+        outliers,
         left_on=["date", "exdate", "strike_price", "close"],
         right_on=["date", "exdate", "strike_price_C", "close_C"],
         how="outer",
@@ -116,11 +150,11 @@ def implied_interest_rate_filter(df):
         columns=["_merge", "strike_price_C", "close_C"]
     )
 
-    # Impute missing rates using median from ATM calls
-    atm = matched[
-        (matched["moneyness"].between(0.95, 1.05))
-        & (matched["pc_parity_int_rate"] >= 0)
-    ]
+    # Impute missing rates using median from ATM calls. Conditioning on a
+    # non-negative rate here would reintroduce the regime dependence, since
+    # r - q is legitimately negative whenever the short rate sits below the
+    # dividend yield, so the surviving quotes are used instead.
+    atm = matched[matched["moneyness"].between(0.95, 1.05) & ~is_outlier]
     if "days_to_maturity_C" in matched.columns:
         med = (
             atm.groupby("days_to_maturity_C")["pc_parity_int_rate"]
@@ -145,8 +179,9 @@ def unable_to_compute_iv_filter(df):
     """
     df = df.assign(mid_price=(df["best_bid"] + df["best_offer"]) / 2)
 
-    # Calculate intrinsic value
-    df["intrinsic"] = 0
+    # Float, not int: the assignments below write floats into this column, and
+    # under pandas 3 an int64 column will raise rather than silently upcast.
+    df["intrinsic"] = 0.0
     call_mask = df["cp_flag"] == "C"
     put_mask = df["cp_flag"] == "P"
     df.loc[call_mask, "intrinsic"] = (
