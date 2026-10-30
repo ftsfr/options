@@ -1,7 +1,7 @@
-chartbook>=0.0.22
+chartbook>=0.3.0
 doit==0.36.0
 pandas==2.2.3
-polars==1.9.0
+polars==1.44.2
 numpy==1.26.4
 pyarrow
 matplotlib==3.9.2

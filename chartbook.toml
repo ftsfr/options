@@ -12,6 +12,10 @@ os_compatibility = [
     "Linux",
     "MacOS",
 ]
+requires_chartbook = ">=0.3.0"
+
+[scripts]
+build = "doit"
 
 [notebooks.summary_options]
 name = "summary_options"
